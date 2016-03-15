@@ -5,7 +5,7 @@ from pyspark.ml import Pipeline
 from pyspark.ml.classification import LogisticRegression
 from pyspark.ml.feature import HashingTF, Tokenizer
 from pyspark.mllib.evaluation import BinaryClassificationMetrics
-
+from src.transformers import BeautifulSoupParser
 
 sc = SparkContext("local", "Pipeline")
 sqlContext = SQLContext(sc)
@@ -13,10 +13,11 @@ df = sqlContext.read.format('com.databricks.spark.csv').options(delimiter="\t", 
 df = df.withColumn("label", df["label"].cast(DoubleType()))
 training, test = df.randomSplit([0.6, 0.4], seed=11)
 
-tokenizer = Tokenizer(inputCol="review", outputCol="words")
+bsParser = BeautifulSoupParser(inputCol="review", outputCol="parsed")
+tokenizer = Tokenizer(inputCol=bsParser.getOutputCol(), outputCol="words")
 hashingTF = HashingTF(inputCol=tokenizer.getOutputCol(), outputCol="features")
 lr = LogisticRegression(maxIter=10, regParam=0.01)
-pipeline = Pipeline(stages=[tokenizer, hashingTF, lr])
+pipeline = Pipeline(stages=[bsParser, tokenizer, hashingTF, lr])
 
 model = pipeline.fit(training)
 
