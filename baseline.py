@@ -1,24 +1,20 @@
 from pyspark import SparkContext
 from pyspark.sql import SQLContext
-from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
-from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from datasources import Datasources
-from pipelines import BaselinePipelineWrapper
+from pipelines import BaselinePipelineEngine
 
-sc = SparkContext("local", "Pipeline")
+sc = SparkContext("local", "Pipeline", pyFiles=["baseline.py", "datasources.py", "transformers.py", "pipelines.py"])
 sqlContext = SQLContext(sc)
 
 dt = Datasources(sc)
-pipeline_wrapper = BaselinePipelineWrapper()
+pipeline_engine = BaselinePipelineEngine()
 
 original_training_set = dt.get_original_training_set()
+original_training_set = original_training_set.limit(10)
 original_test_set = dt.get_original_test_set()
+original_test_set = original_test_set.limit(10)
 
-param_grid = ParamGridBuilder().addGrid(pipeline_wrapper.hashing_tf.numFeatures, [pow(2, 20)]).addGrid(pipeline_wrapper.lr.regParam, [0.1, 0.01]).build()
-cv = CrossValidator().setEstimator(pipeline_wrapper.pipeline).setEvaluator(BinaryClassificationEvaluator()).setEstimatorParamMaps(param_grid).setNumFolds(3)
-
-model = cv.fit(original_training_set)
-
+model = pipeline_engine.fit(original_training_set)
 prediction = model.transform(original_test_set)
 
 id_label = prediction.map(lambda s: '"' + s.id + '",' + str(int(s.prediction)))
