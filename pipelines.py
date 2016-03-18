@@ -14,7 +14,7 @@ class PipelineEngine(object):
         self.pipeline = None
         self.param_grid = None
 
-    def _build_get_stages(self):
+    def _build_stages(self):
         raise NotImplementedError()
 
     def _build_param_grid(self):
@@ -33,11 +33,11 @@ class BaselinePipelineEngine(PipelineEngine):
     @keyword_only
     def __init__(self):
         super(BaselinePipelineEngine, self).__init__()
-        self._build_get_stages()
+        self._build_stages()
         self.pipeline = Pipeline(stages=[self.bs_parser, self.tokenizer, self.hashing_tf, self.idf_model, self.lr])
         self.param_grid = self._build_param_grid()
 
-    def _build_get_stages(self):
+    def _build_stages(self):
         self.bs_parser = BeautifulSoupParser(inputCol="review", outputCol="parsed")
         self.tokenizer = Tokenizer(inputCol=self.bs_parser.getOutputCol(), outputCol="words")
         self.hashing_tf = HashingTF(inputCol=self.tokenizer.getOutputCol(), outputCol="raw_features")
@@ -56,7 +56,7 @@ class SentimentalPipeline(PipelineEngine):
         super(SentimentalPipeline, self).__init__()
         # Todo
 
-    def _build_get_stages(self):
+    def _build_stages(self):
         # Todo
         pass
 
