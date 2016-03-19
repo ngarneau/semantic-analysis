@@ -85,3 +85,6 @@ ENV/
 .spyderproject
 
 .idea/
+predictions.csv/
+data/twitter/
+data/kaggle-old-comp/
