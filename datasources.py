@@ -15,12 +15,12 @@ class Datasources:
     def _get_origin_dataset_loading_parameters(self):
         return self.sql_context.read.format('com.databricks.spark.csv').options(delimiter="\t", header='true', escape="\\")
 
-    def get_original_training_set(self):
-        dt = self._get_origin_dataset_loading_parameters().load('data/labeledTrainData.tsv')
+    def get_original_training_set(self, filename="data/labeledTrainData.tsv"):
+        dt = self._get_origin_dataset_loading_parameters().load(filename)
         return dt.withColumn("label", dt["label"].cast(DoubleType()))
 
-    def get_original_test_set(self):
-        return self._get_origin_dataset_loading_parameters().load('data/testData.tsv')
+    def get_original_test_set(self, filename="data/testData.tsv"):
+        return self._get_origin_dataset_loading_parameters().load(filename)
 
     def save_test_predictions(self, predictions):
         predictions.select('id', 'prediction').write \
@@ -32,6 +32,12 @@ class Datasources:
         # Todo
         # May be interesting to have multiple datasets
         pass
+
+    def get_sample_training_set(self):
+        return self.get_original_training_set('data/sampleTrainData.tsv')
+
+    def get_sample_test_set(self):
+        return self.get_original_test_set('data/sampleTestData.tsv')
 
 
 class DatasourcesTest(unittest.TestCase):

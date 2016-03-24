@@ -9,8 +9,9 @@ from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
 from pyspark.mllib.evaluation import BinaryClassificationMetrics
 
 from datasources import Datasources
-from transformers import BeautifulSoupParser
+from transformers import BeautifulSoupParser, Tokenizzzer
 from pyspark.ml.util import keyword_only
+from nltk.tokenize import TweetTokenizer, WhitespaceTokenizer
 
 
 class PipelineEngine(object):
@@ -18,6 +19,7 @@ class PipelineEngine(object):
         self.evaluator = BinaryClassificationEvaluator()
         self.pipeline = None
         self.param_grid = None
+        self.model = None
 
     def _build_stages(self):
         raise NotImplementedError()
@@ -36,7 +38,8 @@ class PipelineEngine(object):
         cv.setEvaluator(self.evaluator)
         cv.setEstimatorParamMaps(self.param_grid)
         cv.setNumFolds(3)
-        return cv.fit(train)
+        self.model = cv.fit(train)
+        return self.model
 
     def evaluate(self, train):
         train, test = train.randomSplit([0.6, 0.4], 1234)
@@ -74,6 +77,7 @@ class BaselinePipelineEngine(PipelineEngine):
 class SentimentalPipelineEngine(PipelineEngine):
     def __init__(self):
         super(SentimentalPipelineEngine, self).__init__()
+        self.tokenizer_map = [TweetTokenizer(), WhitespaceTokenizer()]
         self.ngram_map = [1, 2, 3]
         self.hashing_tf_map = [pow(2, 20)]
         self.stages = self._build_stages()
@@ -82,7 +86,7 @@ class SentimentalPipelineEngine(PipelineEngine):
 
     def _build_stages(self):
         self.bs_parser = BeautifulSoupParser(inputCol="review", outputCol="parsed")
-        self.tokenizer = Tokenizer(inputCol=self.bs_parser.getOutputCol(), outputCol="words")
+        self.tokenizer = Tokenizzzer(inputCol=self.bs_parser.getOutputCol(), outputCol="words")
         self.ngram = NGram(inputCol=self.tokenizer.getOutputCol(), outputCol="ngrams")
         self.hashing_tf = HashingTF(inputCol=self.ngram.getOutputCol(), outputCol="raw_features")
         self.idf_model = IDF(inputCol=self.hashing_tf.getOutputCol(), outputCol="features")
@@ -91,8 +95,10 @@ class SentimentalPipelineEngine(PipelineEngine):
 
     def _build_param_grid(self):
         param_grid_builder = ParamGridBuilder()
+        param_grid_builder.addGrid(self.tokenizer.tokenizer, self.tokenizer_map)
         param_grid_builder.addGrid(self.ngram.n, self.ngram_map)
         param_grid_builder.addGrid(self.hashing_tf.numFeatures, self.hashing_tf_map)
+        param_grid_builder.addGrid(self.lr.regParam, self.lr_map)
         return param_grid_builder.build()
 
 
