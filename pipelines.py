@@ -2,7 +2,7 @@ import unittest
 
 from pyspark import SparkContext
 from pyspark.ml import Pipeline, PipelineModel
-from pyspark.ml.classification import LogisticRegression
+from pyspark.ml.classification import LogisticRegression, RandomForestClassifier
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml.feature import HashingTF, Tokenizer, IDF, NGram
 from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
@@ -38,6 +38,7 @@ class PipelineEngine(object):
         cv.setEvaluator(self.evaluator)
         cv.setEstimatorParamMaps(self.param_grid)
         cv.setNumFolds(3)
+        print("Metrics: " + str(cv.metrics))
         self.model = cv.fit(train)
         return self.model
 
@@ -90,7 +91,7 @@ class SentimentalPipelineEngine(PipelineEngine):
         self.ngram = NGram(inputCol=self.tokenizer.getOutputCol(), outputCol="ngrams")
         self.hashing_tf = HashingTF(inputCol=self.ngram.getOutputCol(), outputCol="raw_features")
         self.idf_model = IDF(inputCol=self.hashing_tf.getOutputCol(), outputCol="features")
-        self.lr = LogisticRegression(maxIter=10, regParam=0.01)
+        self.random_forest = RandomForestClassifier(featuresCol=self.idf_model.getOutputCol(), )
         return [self.bs_parser, self.tokenizer, self.ngram, self.hashing_tf, self.idf_model, self.lr]
 
     def _build_param_grid(self):

@@ -19,7 +19,7 @@ def app(algorithm, evaluate, sample):
         original_training_set = dt.get_sample_training_set()
         original_test_set = dt.get_sample_test_set()
     else:
-        original_training_set = dt.get_original_training_set()
+        original_training_set = dt.get_amazon_training_set()
         original_test_set = dt.get_original_test_set()
 
     if evaluate:
