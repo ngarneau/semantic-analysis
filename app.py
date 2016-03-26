@@ -1,7 +1,6 @@
-import os
-
 import click
 from pyspark import SparkContext
+from pyspark.ml.tuning import CrossValidator
 from datasources import Datasources
 from pipelines import BaselinePipelineEngine, SentimentalPipelineEngine
 
@@ -28,15 +27,15 @@ def app(algorithm, evaluate, sample):
     else:
         model = pipeline_engine.fit(original_training_set)
         prediction = model.transform(original_test_set)
-        id_label = prediction.rdd().map(lambda s: '"' + s.id + '",' + str(int(s.prediction)))
+        id_label = prediction.rdd.map(lambda s: '"' + s.id + '",' + str(int(s.prediction)))
         save_to_file(id_label, "predictions.csv")
 
 
 def get_pipeline(algorithm):
     if algorithm == "baseline":
-        return BaselinePipelineEngine()
+        return BaselinePipelineEngine(cv=CrossValidator())
     elif algorithm == "sentimental":
-        return SentimentalPipelineEngine()
+        return SentimentalPipelineEngine(cv=CrossValidator())
     else:
         raise RuntimeError("You must specify an algorithm")
 

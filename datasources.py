@@ -32,22 +32,22 @@ class Datasources:
         df.cache
         return df
 
-    def save_test_predictions(self, predictions):
-        predictions.select('id', 'prediction').write \
-            .format('com.databricks.spark.csv') \
-            .save('predictions.csv')
-
-
-    def get_twitter_dataset(self):
-        # Todo
-        # May be interesting to have multiple datasets
-        pass
+    def get_sample_amazon_training_set(self):
+        df = self.sql_context.read.json("data/amazon/sample.json")
+        df.cache
+        return df
 
     def get_sample_training_set(self):
         return self.get_original_training_set('data/sampleTrainData.tsv')
 
     def get_sample_test_set(self):
         return self.get_original_test_set('data/sampleTestData.tsv')
+
+    def save_test_predictions(self, predictions):
+        predictions.select('id', 'prediction').write \
+            .format('com.databricks.spark.csv') \
+            .save('predictions.csv')
+
 
 
 
