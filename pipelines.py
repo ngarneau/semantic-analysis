@@ -1,6 +1,5 @@
 import unittest
 import mock
-from unittest.mock import MagicMock
 
 from pyspark import SparkContext, SQLContext
 from pyspark.ml import Pipeline, PipelineModel
