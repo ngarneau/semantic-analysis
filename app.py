@@ -18,8 +18,8 @@ def app(algorithm, evaluate, sample):
         original_training_set = dt.get_sample_training_set()
         original_test_set = dt.get_sample_test_set()
     else:
-        original_training_set = dt.get_amazon_training_set()
-        original_test_set = dt.get_original_test_set()
+        original_training_set = dt.get_original_training_set("s3://ift-7025/labeledTrainData.tsv")
+        original_test_set = dt.get_original_test_set("s3://ift-7025/testData.tsv")
 
     if evaluate:
         metrics = pipeline_engine.evaluate(original_training_set)
