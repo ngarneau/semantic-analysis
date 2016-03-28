@@ -1,6 +1,5 @@
 import unittest
 import mock
-
 from pyspark import SparkContext, SQLContext
 from pyspark.ml import Pipeline, PipelineModel
 from pyspark.ml.classification import LogisticRegression, RandomForestClassifier
