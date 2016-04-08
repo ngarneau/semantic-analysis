@@ -29,12 +29,12 @@ class Datasources:
 
     def get_amazon_training_set(self, filename="data/amazon"):
         df = self.sql_context.read.json(filename)
-        df.cache
+        df.cache()
         return df
 
     def get_sample_amazon_training_set(self):
         df = self.sql_context.read.json("data/amazon/sample.json")
-        df.cache
+        df.cache()
         return df
 
     def get_sample_training_set(self):

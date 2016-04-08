@@ -1,4 +1,5 @@
 import click
+import time
 from pyspark import SparkContext
 from pyspark.ml.tuning import CrossValidator
 from datasources import Datasources
@@ -7,10 +8,13 @@ from pipelines import BaselinePipelineEngine, SentimentalPipelineEngine
 
 @click.command()
 @click.option('--algorithm', default="sentimental", help='Algorithm to run on dataset.')
+@click.option('--train', default="data/labeledTrainData.tsv", help='Train dataset.')
+@click.option('--test', default="data/testData.tsv", help='Test dataset.')
+@click.option('--output', default="data/output", help='Place to put the results.')
 @click.option('--evaluate/--fit', default=False, help='Flag to evaluate or run fit the model on the whole dataset')
 @click.option('--sample/--no-sample', default=False, help='Only run on a sample to save time')
-def app(algorithm, evaluate, sample):
-    sc = SparkContext("local", "Pipeline", pyFiles=["datasources.py", "transformers.py", "pipelines.py"])
+def app(algorithm, train, test, output, evaluate, sample):
+    sc = SparkContext(appName="Pipeline")
     dt = Datasources(sc)
     pipeline_engine = get_pipeline(algorithm)
 
@@ -18,8 +22,8 @@ def app(algorithm, evaluate, sample):
         original_training_set = dt.get_sample_training_set()
         original_test_set = dt.get_sample_test_set()
     else:
-        original_training_set = dt.get_original_training_set("s3://ift-7025/labeledTrainData.tsv")
-        original_test_set = dt.get_original_test_set("s3://ift-7025/testData.tsv")
+        original_training_set = dt.get_original_training_set(train)
+        original_test_set = dt.get_original_test_set(test)
 
     if evaluate:
         metrics = pipeline_engine.evaluate(original_training_set)
@@ -28,7 +32,7 @@ def app(algorithm, evaluate, sample):
         model = pipeline_engine.fit(original_training_set)
         prediction = model.transform(original_test_set)
         id_label = prediction.rdd.map(lambda s: '"' + s.id + '",' + str(int(s.prediction)))
-        save_to_file(id_label, "predictions.csv")
+        save_to_file(id_label, output)
 
 
 def get_pipeline(algorithm):
@@ -42,7 +46,7 @@ def get_pipeline(algorithm):
 
 def save_to_file(rdd, path):
     try:
-        rdd.saveAsTextFile(path)
+        rdd.saveAsTextFile(path + "_" + str(time.time()))
     except OSError:
         pass
 

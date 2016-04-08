@@ -3,7 +3,7 @@ import mock
 from pyspark import SparkContext, SQLContext
 from pyspark.ml import Pipeline, PipelineModel
 from pyspark.ml.classification import LogisticRegression, RandomForestClassifier
-from pyspark.ml.feature import StringIndexer
+from pyspark.ml.feature import StringIndexer, VectorAssembler
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml.feature import HashingTF, Tokenizer, IDF, NGram
 from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
@@ -11,7 +11,7 @@ from pyspark.mllib.evaluation import BinaryClassificationMetrics
 from pyspark.mllib.linalg import Vectors
 
 from datasources import Datasources
-from transformers import BeautifulSoupParser, Tokenizzzer
+from transformers import BeautifulSoupParser, Tokenizzzer, PorterStemmerTransformer, VaderPolarizer
 from pyspark.ml.util import keyword_only
 from nltk.tokenize import TweetTokenizer, WhitespaceTokenizer
 
@@ -80,8 +80,8 @@ class BaselinePipelineEngine(PipelineEngine):
 class SentimentalPipelineEngine(PipelineEngine):
     def __init__(self, cv):
         super(SentimentalPipelineEngine, self).__init__(cv)
-        self.tokenizer_map = [TweetTokenizer(), WhitespaceTokenizer()]
-        self.ngram_map = [1, 2, 3]
+        self.tokenizer_map = [TweetTokenizer()]
+        self.ngram_map = [1]
         self.hashing_tf_map = [pow(2, 20)]
         self.stages = self._build_stages()
         self.pipeline = Pipeline(stages=self.stages)
@@ -90,15 +90,12 @@ class SentimentalPipelineEngine(PipelineEngine):
     def _build_stages(self):
         self.bs_parser = BeautifulSoupParser(inputCol="review", outputCol="parsed")
         self.tokenizer = Tokenizzzer(inputCol=self.bs_parser.getOutputCol(), outputCol="words")
-        self.ngram = NGram(inputCol=self.tokenizer.getOutputCol(), outputCol="ngrams")
-        self.hashing_tf = HashingTF(inputCol=self.ngram.getOutputCol(), outputCol="raw_features")
-        self.idf_model = IDF(inputCol=self.hashing_tf.getOutputCol(), outputCol="features")
-        self.string_index = StringIndexer(inputCol="label", outputCol="indexed")
-        self.random_forest = RandomForestClassifier(
-            featuresCol=self.idf_model.getOutputCol(),
-            labelCol=self.string_index.getOutputCol()
-        )
-        return [self.bs_parser, self.tokenizer, self.ngram, self.hashing_tf, self.idf_model, self.string_index, self.random_forest]
+        self.porter = PorterStemmerTransformer(inputCol=self.tokenizer.getOutputCol(), outputCol="stemmed")
+        self.ngram = NGram(inputCol=self.porter.getOutputCol(), outputCol="ngrams")
+        self.hashing_tf = HashingTF(inputCol=self.ngram.getOutputCol(), outputCol="features")
+        self.vader = VaderPolarizer(inputCol=self.bs_parser.getOutputCol())
+        self.lr = LogisticRegression(featuresCol='features', maxIter=10, regParam=0.1)
+        return [self.bs_parser, self.tokenizer, self.porter, self.ngram, self.hashing_tf, self.vader, self.lr]
 
     def _build_param_grid(self):
         param_grid_builder = ParamGridBuilder()
