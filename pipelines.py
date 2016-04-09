@@ -1,9 +1,10 @@
 import unittest
+
 import mock
 from pyspark import SparkContext, SQLContext
 from pyspark.ml import Pipeline, PipelineModel
-from pyspark.ml.classification import LogisticRegression, RandomForestClassifier
-from pyspark.ml.feature import StringIndexer, VectorAssembler
+from pyspark.ml.classification import LogisticRegression, RandomForestClassifier, MultilayerPerceptronClassifier
+from pyspark.ml.feature import StringIndexer, VectorAssembler, PCA, VectorIndexer, Normalizer, Word2Vec
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml.feature import HashingTF, Tokenizer, IDF, NGram
 from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
@@ -83,6 +84,7 @@ class SentimentalPipelineEngine(PipelineEngine):
         self.tokenizer_map = [TweetTokenizer()]
         self.ngram_map = [1]
         self.hashing_tf_map = [pow(2, 20)]
+        self.clf_map = [0.1]
         self.stages = self._build_stages()
         self.pipeline = Pipeline(stages=self.stages)
         self.param_grid = self._build_param_grid()
@@ -93,15 +95,18 @@ class SentimentalPipelineEngine(PipelineEngine):
         self.porter = PorterStemmerTransformer(inputCol=self.tokenizer.getOutputCol(), outputCol="stemmed")
         self.ngram = NGram(inputCol=self.porter.getOutputCol(), outputCol="ngrams")
         self.hashing_tf = HashingTF(inputCol=self.ngram.getOutputCol(), outputCol="features")
-        self.vader = VaderPolarizer(inputCol=self.bs_parser.getOutputCol())
-        self.lr = LogisticRegression(featuresCol='features', maxIter=10, regParam=0.1)
-        return [self.bs_parser, self.tokenizer, self.porter, self.ngram, self.hashing_tf, self.vader, self.lr]
+        self.idf = IDF(inputCol="features", outputCol="idf_features")
+        self.normalizer = Normalizer(inputCol="idf_features", outputCol="norm_features", p=1.0)
+        self.clf = LogisticRegression(featuresCol='features', regParam=0.1)
+        # self.clf = MultilayerPerceptronClassifier(featuresCol="norm_features", maxIter=1000, layers=[self.hashing_tf.getNumFeatures(), 200, 100, 2])
+        return [self.bs_parser, self.tokenizer, self.porter, self.ngram, self.hashing_tf, self.clf]
 
     def _build_param_grid(self):
         param_grid_builder = ParamGridBuilder()
         param_grid_builder.addGrid(self.tokenizer.tokenizer, self.tokenizer_map)
         param_grid_builder.addGrid(self.ngram.n, self.ngram_map)
         param_grid_builder.addGrid(self.hashing_tf.numFeatures, self.hashing_tf_map)
+        # param_grid_builder.addGrid(self.clf.regParam, self.clf_map)
         return param_grid_builder.build()
 
 
