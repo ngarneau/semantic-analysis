@@ -48,8 +48,8 @@ class PipelineEngine(object):
         model = self.fit(train)
         prediction = model.transform(test)
         prediction_and_labels = prediction.rdd.map(lambda s: (s.prediction, s.label))
-        print("Params map: " + str(self.cv.metrics))
-        print("Metrics: " + str(self.cv.getEstimatorParamMaps()))
+        # print("Params map: " + str(self.cv.metrics))
+        # print("Metrics: " + str(self.cv.getEstimatorParamMaps()))
         return BinaryClassificationMetrics(prediction_and_labels)
 
 
