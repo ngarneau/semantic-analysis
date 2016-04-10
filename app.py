@@ -24,10 +24,10 @@ def app(algorithm, train, test, output, evaluate, sample, amazon):
         original_training_set = dt.get_sample_training_set()
         original_test_set = dt.get_sample_test_set()
     else:
-        amazon_neg = sql_context.read.json(amazon + "_neg")
-        amazon_pos = sql_context.read.json(amazon + "_pos")
+        # amazon_neg = sql_context.read.json(amazon + "_neg")
+        # amazon_pos = sql_context.read.json(amazon + "_pos")
         original_training_set = dt.get_original_training_set(train)
-        original_training_set = original_training_set.unionAll(amazon_neg).unionAll(amazon_pos)
+        # original_training_set = original_training_set.unionAll(amazon_neg).unionAll(amazon_pos)
         original_test_set = dt.get_original_test_set(test)
 
     if evaluate:
