@@ -48,9 +48,10 @@ def app(algorithm, train, test, output, evaluate, sample, amazon):
 
 
 def write_metrics_to_file(metrics_str, output):
-    file = open(output + "_" + str(time.time()) + ".txt", "w")
-    file.write(metrics_str)
-    file.close()
+    print(metrics_str)
+    # file = open(output + "_" + str(time.time()) + ".txt", "w")
+    # file.write(metrics_str)
+    # file.close()
 
 
 def get_pipeline(algorithm):
