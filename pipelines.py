@@ -99,7 +99,7 @@ class SentimentalPipelineEngine(PipelineEngine):
         self.hashing_tf = HashingTF(inputCol=self.ngram.getOutputCol(), outputCol="features")
         self.idf = IDF(inputCol="features", outputCol="idf_features")
         self.normalizer = Normalizer(inputCol="idf_features", outputCol="norm_features", p=1.0)
-        self.clf = LogisticRegression(featuresCol='norm_features', regParam=0.1)
+        self.clf = LogisticRegression(featuresCol='features', regParam=0.1)
         # self.clf = MultilayerPerceptronClassifier(featuresCol="norm_features", maxIter=1000, layers=[self.hashing_tf.getNumFeatures(), 200, 100, 2])
         return [self.bs_parser, self.tokenizer, self.porter, self.ngram, self.hashing_tf, self.clf]
 
