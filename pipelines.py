@@ -81,10 +81,10 @@ class BaselinePipelineEngine(PipelineEngine):
 class SentimentalPipelineEngine(PipelineEngine):
     def __init__(self, cv):
         super(SentimentalPipelineEngine, self).__init__(cv)
-        self.tokenizer_map = [TweetTokenizer()]
-        self.ngram_map = [1]
+        self.tokenizer_map = [TweetTokenizer(), WhitespaceTokenizer()]
+        self.ngram_map = [1, 2, 3]
         self.hashing_tf_map = [pow(2, 20)]
-        self.clf_map = [0.1]
+        self.clf_map = [0.1, 0.01]
         self.stages = self._build_stages()
         self.pipeline = Pipeline(stages=self.stages)
         self.param_grid = self._build_param_grid()
