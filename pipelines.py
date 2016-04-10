@@ -94,7 +94,7 @@ class SentimentalPipelineEngine(PipelineEngine):
         self.bs_parser = BeautifulSoupParser(inputCol="review", outputCol="parsed")
         self.tokenizer = Tokenizzzer(inputCol=self.bs_parser.getOutputCol(), outputCol="words")
         self.stopwords_remover = StopWordsRemover(inputCol="words", outputCol="filtered")
-        self.porter = PorterStemmerTransformer(inputCol=self.stopwords_remover.getOutputCol(), outputCol="stemmed")
+        self.porter = PorterStemmerTransformer(inputCol=self.tokenizer.getOutputCol(), outputCol="stemmed")
         self.ngram = NGram(inputCol=self.porter.getOutputCol(), outputCol="ngrams")
         self.hashing_tf = HashingTF(inputCol=self.ngram.getOutputCol(), outputCol="features")
         self.idf = IDF(inputCol="features", outputCol="idf_features")
