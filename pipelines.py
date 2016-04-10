@@ -101,7 +101,7 @@ class SentimentalPipelineEngine(PipelineEngine):
         self.normalizer = Normalizer(inputCol="idf_features", outputCol="norm_features", p=1.0)
         self.clf = LogisticRegression(featuresCol='norm_features', regParam=0.1)
         # self.clf = MultilayerPerceptronClassifier(featuresCol="norm_features", maxIter=1000, layers=[self.hashing_tf.getNumFeatures(), 200, 100, 2])
-        return [self.bs_parser, self.tokenizer, self.stopwords_remover, self.porter, self.ngram, self.hashing_tf, self.idf, self.normalizer, self.clf]
+        return [self.bs_parser, self.tokenizer, self.porter, self.ngram, self.hashing_tf, self.clf]
 
     def _build_param_grid(self):
         param_grid_builder = ParamGridBuilder()
